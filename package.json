@@ -2,13 +2,40 @@
   "name": "opencode-toon-plugin",
   "version": "0.1.0",
   "description": "OpenCode plugin that compacts large JSON tool output with Toon.",
+  "author": "Frederik Bosch",
   "license": "MIT",
+  "homepage": "https://github.com/fbosch/opencode-toon-plugin#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fbosch/opencode-toon-plugin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fbosch/opencode-toon-plugin/issues"
+  },
+  "keywords": [
+    "opencode",
+    "plugin",
+    "toon",
+    "json"
+  ],
   "packageManager": "bun@1.3.10",
   "type": "module",
-  "exports": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
   "files": [
-    "src"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "opencode": {
     "type": "plugin",
     "hooks": [
@@ -16,14 +43,20 @@
     ]
   },
   "scripts": {
-    "test": "bun test"
+    "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "bun audit && bun run test && bun run build",
+    "release": "bun run typecheck && bunx bumpp && bun publish --access public",
+    "test": "bun test --passWithNoTests",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@toon-format/toon": "^2.1.0"
   },
   "devDependencies": {
     "@opencode-ai/plugin": "*",
-    "@types/node": "^24.5.2"
+    "@types/node": "^24.5.2",
+    "bumpp": "^10.2.3",
+    "typescript": "^5.9.3"
   },
   "peerDependencies": {
     "@opencode-ai/plugin": "*"
