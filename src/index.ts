@@ -2,37 +2,53 @@ import { encode } from "@toon-format/toon";
 import type { Plugin } from "@opencode-ai/plugin";
 
 const DEFAULT_ELIGIBLE_TOOLS = ["bash"];
-const eligibleTools = new Set(
-  (process.env.OPENCODE_TOON_PLUGIN_TOOLS ?? DEFAULT_ELIGIBLE_TOOLS.join(","))
-    .split(",")
-    .map((tool) => tool.trim().toLowerCase())
-    .filter(Boolean),
-);
 
-const ToonPlugin: Plugin = async () => ({
-  "tool.execute.after": async (input, output) => {
-    if (!eligibleTools.has(String(input?.tool ?? "").toLowerCase())) return;
+function getEligibleTools() {
+  const raw = process.env.OPENCODE_TOON_PLUGIN_TOOLS;
 
-    const text = output?.output;
-    if (typeof text !== "string") return;
+  return new Set(
+    (raw ? raw.split(",") : DEFAULT_ELIGIBLE_TOOLS)
+      .map((tool) => tool.trim().toLowerCase())
+      .filter(Boolean),
+  );
+}
 
-    const trimmed = text.trim();
-    if (trimmed.length < 256 || (trimmed[0] !== "{" && trimmed[0] !== "[")) {
-      return;
-    }
+function looksLikeJson(text: string) {
+  const first = text[0];
+  const last = text[text.length - 1];
 
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(trimmed);
-    } catch {
-      return;
-    }
+  return (first === "{" && last === "}") || (first === "[" && last === "]");
+}
 
-    try {
-      const converted = encode(parsed);
-      if (converted.length < text.length) output.output = converted;
-    } catch {}
-  },
-});
+const ToonPlugin: Plugin = async () => {
+  const eligibleTools = getEligibleTools();
+
+  return {
+    "tool.execute.after": async (input, output) => {
+      if (!eligibleTools.has(input.tool.toLowerCase())) return;
+
+      const trimmed = output.output.trim();
+      if (trimmed.length < 256) return;
+      if (!looksLikeJson(trimmed)) return;
+
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(trimmed);
+      } catch {
+        return;
+      }
+
+      try {
+        const converted = encode(parsed);
+        if (converted.length < trimmed.length) output.output = converted;
+      } catch (error) {
+        console.error(
+          "[opencode-toon-plugin] Failed to encode JSON output",
+          error,
+        );
+      }
+    },
+  };
+};
 
 export default ToonPlugin;
