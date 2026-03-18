@@ -1,8 +1,16 @@
+import { encode } from "@toon-format/toon";
+
 type Detector = (text: string) => boolean;
 type LooksLikeJson = (text: string) => boolean;
 
 const MIN_LENGTH = 256;
 const ITERATIONS = 200_000;
+const TOON_BASELINE_LABEL = "toon-default";
+const TOON_VARIANT_LABEL = "toon-tab-keyfold";
+const TOON_VARIANT_OPTIONS = {
+  delimiter: "\t",
+  keyFolding: "safe",
+} as const;
 
 function looksLikeJson(text: string) {
   const first = text[0];
@@ -124,6 +132,22 @@ function makeLongJson(rng: () => number) {
   });
 }
 
+function makeNestedWrapperJson(rng: () => number) {
+  return JSON.stringify({
+    data: {
+      metadata: {
+        results: {
+          items: Array.from({ length: 18 }, (_, i) => ({
+            id: i + 1,
+            path: `${randomWord(rng, 4, 8)}/${randomWord(rng, 5, 10)}.ts`,
+            status: rng() > 0.5 ? "ok" : "changed",
+          })),
+        },
+      },
+    },
+  });
+}
+
 function withWhitespace(rng: () => number, text: string) {
   const prefix = " ".repeat(Math.floor(rng() * 4)) + (rng() > 0.7 ? "\n" : "");
   const suffix = (rng() > 0.7 ? "\n" : "") + " ".repeat(Math.floor(rng() * 4));
@@ -171,6 +195,79 @@ function sampleDataset(kind: "mostly-non-json" | "mixed" | "mostly-json") {
     if (roll < 0.7) return makeJsonLookingGarbage(rng);
     return withWhitespace(rng, makeLongJson(rng));
   });
+}
+
+function summarizeToonVariant(
+  name: string,
+  encodeJson: (parsed: unknown) => string,
+  dataset: string[],
+) {
+  const jsonSamples = dataset
+    .map((sample) => sample.trim())
+    .filter((sample) => sample.length >= MIN_LENGTH && looksLikeJson(sample));
+
+  const start = performance.now();
+  let encodedCount = 0;
+  let totalInputLength = 0;
+  let totalOutputLength = 0;
+  let shorterCount = 0;
+
+  for (const sample of jsonSamples) {
+    try {
+      const parsed = JSON.parse(sample);
+      const converted = encodeJson(parsed);
+      encodedCount++;
+      totalInputLength += sample.length;
+      totalOutputLength += converted.length;
+      if (converted.length < sample.length) shorterCount++;
+    } catch {
+      // ignore invalid JSON-like garbage
+    }
+  }
+
+  const durationMs = performance.now() - start;
+  return {
+    name,
+    encodedCount,
+    totalInputLength,
+    totalOutputLength,
+    shorterCount,
+    durationMs,
+  };
+}
+
+function formatPercent(value: number) {
+  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+}
+
+function runToonBenchmark(name: string, dataset: string[]) {
+  const results = [
+    summarizeToonVariant(TOON_BASELINE_LABEL, (parsed) => encode(parsed), dataset),
+    summarizeToonVariant(
+      TOON_VARIANT_LABEL,
+      (parsed) => encode(parsed, TOON_VARIANT_OPTIONS),
+      dataset,
+    ),
+  ];
+  const baseline = results[0]!;
+
+  console.log(`TOON benchmark: ${name}`);
+  for (const result of results) {
+    const sizeDelta =
+      baseline.totalOutputLength === 0
+        ? 0
+        : ((result.totalOutputLength - baseline.totalOutputLength) /
+            baseline.totalOutputLength) *
+          100;
+    const timeDelta =
+      baseline.durationMs === 0
+        ? 0
+        : ((result.durationMs - baseline.durationMs) / baseline.durationMs) * 100;
+
+    console.log(
+      `${result.name}: ${result.durationMs.toFixed(2)}ms, ${result.shorterCount}/${result.encodedCount} shorter, total chars ${result.totalOutputLength}${result === baseline ? "" : ` | size delta: ${formatPercent(sizeDelta)} | time delta: ${formatPercent(timeDelta)}`}`,
+    );
+  }
 }
 
 function benchmark(name: string, detector: Detector, dataset: string[]) {
@@ -243,4 +340,17 @@ for (const scenario of ["mostly-non-json", "mixed", "mostly-json"] as const) {
       `${result.name}: ${result.durationMs.toFixed(2)}ms (${result.hits}/${result.samples})${result === looksLikeJsonBaseline ? "" : ` | delta: ${delta >= 0 ? "+" : ""}${delta.toFixed(2)}%`}`,
     );
   }
+}
+
+const toonDatasets = {
+  tabular: Array.from({ length: 20 }, () => makeLongJson(createRng(101))),
+  nested: Array.from({ length: 20 }, () => makeNestedWrapperJson(createRng(202))),
+  mixed: Array.from({ length: 10 }, () => makeLongJson(createRng(303))).concat(
+    Array.from({ length: 10 }, () => makeNestedWrapperJson(createRng(404))),
+  ),
+};
+
+console.log("\nTOON encode option comparison:");
+for (const [name, dataset] of Object.entries(toonDatasets)) {
+  runToonBenchmark(name, dataset);
 }

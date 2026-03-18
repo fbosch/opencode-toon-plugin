@@ -2,6 +2,10 @@ import { encode } from "@toon-format/toon";
 import type { Plugin } from "@opencode-ai/plugin";
 
 const DEFAULT_ELIGIBLE_TOOLS = ["bash"];
+const TOON_OPTIONS = {
+  delimiter: "\t",
+  keyFolding: "safe",
+} as const;
 
 function getEligibleTools() {
   const raw = process.env.OPENCODE_TOON_PLUGIN_TOOLS;
@@ -39,7 +43,7 @@ const ToonPlugin: Plugin = async () => {
       }
 
       try {
-        const converted = encode(parsed);
+        const converted = encode(parsed, TOON_OPTIONS);
         if (converted.length < trimmed.length) output.output = converted;
       } catch (error) {
         console.error(
