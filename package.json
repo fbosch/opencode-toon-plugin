@@ -50,7 +50,7 @@
     "lint-staged": "lint-staged",
     "prepublishOnly": "bun audit && bun run test && bun run build",
     "release": "bun run typecheck && bunx bumpp && bun publish --access public",
-    "test": "bun test --passWithNoTests",
+    "test": "bun test test/plugin.test.ts --passWithNoTests",
     "test:integration": "bun run build && bun test test/opencode.integration.test.ts",
     "typecheck": "tsc --noEmit"
   },

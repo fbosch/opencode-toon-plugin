@@ -20,6 +20,12 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Install OpenCode CLI
+        run: bun add --global opencode-ai@1.1.48
+
+      - name: Check OpenCode CLI
+        run: opencode --version
+
       - name: Audit dependencies
         run: bun audit
 
@@ -28,6 +34,9 @@ jobs:
 
       - name: Test
         run: bun run test
+
+      - name: Integration test
+        run: bun run test:integration
 
       - name: Build
         run: bun run build

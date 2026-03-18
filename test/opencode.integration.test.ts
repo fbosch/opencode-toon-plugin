@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
@@ -9,6 +9,8 @@ import { promisify } from "node:util";
 
 const repoDir = dirname(dirname(fileURLToPath(import.meta.url)));
 const execFileAsync = promisify(execFile);
+const opencodeBin = process.env.OPENCODE_BIN ??
+  (process.platform === "win32" ? "opencode.cmd" : "opencode");
 
 async function run(command: string[], cwd: string, env?: NodeJS.ProcessEnv) {
   const [file, ...args] = command;
@@ -66,30 +68,19 @@ test("opencode resolves and loads the plugin from a temp config", {
     );
 
     const { stdout, stderr } = await runWithRetries(
-      ["opencode", "debug", "config"],
+      [opencodeBin, "debug", "config"],
       tempProjectDir,
       3,
       process.env,
     );
 
-    let pluginPath: string | undefined;
+    assert.ok(
+      stdout,
+      `expected \`${opencodeBin} debug config\` to output JSON, stderr: ${stderr || "(empty)"}`,
+    );
 
-    if (stdout) {
-      const resolvedConfig = JSON.parse(stdout) as { plugin: string[] };
-      pluginPath = resolvedConfig.plugin.find((entry) => entry === pluginEntry);
-    }
-
-    if (!pluginPath) {
-      const logPath = stderr.match(/check log file at (.+) for more details/u)?.[1];
-      assert.ok(logPath, "expected opencode to report a log file path");
-
-      const logContents = await readFile(logPath, "utf8");
-      assert.match(
-        logContents,
-        new RegExp(`service=plugin path=${pluginEntry} loading plugin`),
-      );
-      pluginPath = pluginEntry;
-    }
+    const resolvedConfig = JSON.parse(stdout) as { plugin: string[] };
+    const pluginPath = resolvedConfig.plugin.find((entry) => entry === pluginEntry);
 
     assert.equal(pluginPath, pluginEntry);
 
