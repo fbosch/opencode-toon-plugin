@@ -2,6 +2,8 @@
 
 # opencode-toon-plugin
 
+[![npm version](https://img.shields.io/npm/v/opencode-toon-plugin)](https://www.npmjs.com/package/opencode-toon-plugin)
+
 Compact large JSON tool output in OpenCode with [TOON](https://github.com/toon-format/toon).
 
 Turns large JSON blobs into shorter, still-readable structured output and only replaces the original when the TOON result is smaller.
