@@ -3,7 +3,10 @@ import test from "node:test";
 
 import ToonPlugin from "../src/index";
 
-const LONG_JSON = JSON.stringify({ hello: "world", items: Array.from({ length: 80 }, (_, i) => i) });
+const LONG_JSON = JSON.stringify({
+  hello: "world",
+  items: Array.from({ length: 80 }, (_, i) => i),
+});
 
 function createOutput() {
   return {

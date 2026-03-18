@@ -1,5 +1,5 @@
-import { encode } from "@toon-format/toon";
 import type { Plugin } from "@opencode-ai/plugin";
+import { encode } from "@toon-format/toon";
 
 const DEFAULT_ELIGIBLE_TOOLS = ["bash"];
 const TOON_OPTIONS = {

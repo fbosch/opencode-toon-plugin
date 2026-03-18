@@ -168,7 +168,7 @@ function makeJsonLookingGarbage(rng: () => number) {
     () => `${randomWord(rng, 3, 8)}:${randomWord(rng, 3, 12)}`,
   ).join(",");
 
-  return `{${inner}`.padEnd(MIN_LENGTH + 40, "!") + "}";
+  return `${`{${inner}`.padEnd(MIN_LENGTH + 40, "!")}}`;
 }
 
 function sampleDataset(kind: "mostly-non-json" | "mixed" | "mostly-json") {
@@ -242,14 +242,20 @@ function formatPercent(value: number) {
 
 function runToonBenchmark(name: string, dataset: string[]) {
   const results = [
-    summarizeToonVariant(TOON_BASELINE_LABEL, (parsed) => encode(parsed), dataset),
+    summarizeToonVariant(
+      TOON_BASELINE_LABEL,
+      (parsed) => encode(parsed),
+      dataset,
+    ),
     summarizeToonVariant(
       TOON_VARIANT_LABEL,
       (parsed) => encode(parsed, TOON_VARIANT_OPTIONS),
       dataset,
     ),
   ];
-  const baseline = results[0]!;
+  const [baseline] = results;
+
+  if (!baseline) return;
 
   console.log(`TOON benchmark: ${name}`);
   for (const result of results) {
@@ -262,7 +268,8 @@ function runToonBenchmark(name: string, dataset: string[]) {
     const timeDelta =
       baseline.durationMs === 0
         ? 0
-        : ((result.durationMs - baseline.durationMs) / baseline.durationMs) * 100;
+        : ((result.durationMs - baseline.durationMs) / baseline.durationMs) *
+          100;
 
     console.log(
       `${result.name}: ${result.durationMs.toFixed(2)}ms, ${result.shorterCount}/${result.encodedCount} shorter, total chars ${result.totalOutputLength}${result === baseline ? "" : ` | size delta: ${formatPercent(sizeDelta)} | time delta: ${formatPercent(timeDelta)}`}`,
@@ -309,7 +316,9 @@ for (const scenario of ["mostly-non-json", "mixed", "mostly-json"] as const) {
     benchmark("trim-guarded-parse-charcode", guardedParseCharCode, dataset),
     benchmark("bounds-guarded-parse", boundsGuardedParse, dataset),
   ];
-  const baseline = results[0]!;
+  const [baseline] = results;
+
+  if (!baseline) continue;
 
   console.log(`\nScenario: ${scenario}`);
   for (const result of results) {
@@ -328,7 +337,9 @@ for (const scenario of ["mostly-non-json", "mixed", "mostly-json"] as const) {
       dataset,
     ),
   ];
-  const looksLikeJsonBaseline = looksLikeJsonResults[0]!;
+  const [looksLikeJsonBaseline] = looksLikeJsonResults;
+
+  if (!looksLikeJsonBaseline) continue;
 
   console.log("looksLikeJson only:");
   for (const result of looksLikeJsonResults) {
@@ -344,7 +355,9 @@ for (const scenario of ["mostly-non-json", "mixed", "mostly-json"] as const) {
 
 const toonDatasets = {
   tabular: Array.from({ length: 20 }, () => makeLongJson(createRng(101))),
-  nested: Array.from({ length: 20 }, () => makeNestedWrapperJson(createRng(202))),
+  nested: Array.from({ length: 20 }, () =>
+    makeNestedWrapperJson(createRng(202)),
+  ),
   mixed: Array.from({ length: 10 }, () => makeLongJson(createRng(303))).concat(
     Array.from({ length: 10 }, () => makeNestedWrapperJson(createRng(404))),
   ),
