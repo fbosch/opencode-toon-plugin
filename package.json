@@ -43,6 +43,7 @@
     ]
   },
   "scripts": {
+    "bench:json-detect": "bun scripts/benchmark-json-detection.ts",
     "build": "tsc -p tsconfig.json",
     "prepublishOnly": "bun audit && bun run test && bun run build",
     "release": "bun run typecheck && bunx bumpp && bun publish --access public",

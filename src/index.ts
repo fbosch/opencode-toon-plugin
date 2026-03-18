@@ -14,10 +14,10 @@ function getEligibleTools() {
 }
 
 function looksLikeJson(text: string) {
-  const first = text[0];
-  const last = text[text.length - 1];
-
-  return (first === "{" && last === "}") || (first === "[" && last === "]");
+  const first = text.charCodeAt(0);
+  const last = text.charCodeAt(text.length - 1);
+  // starts with "{" and ends with "}" or starts with "[" and ends with "]"
+  return (first === 123 && last === 125) || (first === 91 && last === 93);
 }
 
 const ToonPlugin: Plugin = async () => {
