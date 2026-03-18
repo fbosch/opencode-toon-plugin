@@ -27,9 +27,86 @@ Add it to your OpenCode config:
 
 ## Behavior
 
-- intercepts `bash` tool output
-- skips small output and non-JSON text
-- encodes JSON with TOON
+```text
+bash output
+   |
+   +-- <256 chars or non-JSON -----> keep original
+   |
+   +-- JSON >=256 chars
+         |
+         +-- TOON is shorter ------> replace output
+         |
+         +-- TOON is not shorter --> keep original
+```
+
+## Example
+
+Prompt:
+
+```text
+Run `gh api repos/octocat/Hello-World/issues` and show me the result.
+```
+
+<table>
+  <tr>
+    <th>Without TOON</th>
+    <th>With TOON</th>
+  </tr>
+  <tr>
+    <td>
+      <pre lang="json">[
+  {
+    "id": 1,
+    "title": "Found a bug",
+    "state": "open",
+    "labels": [
+      { "name": "bug" }
+    ],
+    "assignee": "monalisa"
+  },
+  {
+    "id": 2,
+    "title": "Docs update",
+    "state": "open",
+    "labels": [
+      { "name": "docs" }
+    ],
+    "assignee": "hubot"
+  },
+  {
+    "id": 3,
+    "title": "Ship release",
+    "state": "closed",
+    "labels": [
+      { "name": "release" }
+    ],
+    "assignee": "octocat"
+  }
+]</pre>
+    </td>
+    <td>
+      <pre lang="text">[3]:
+  - id: 1
+    title: Found a bug
+    state: open
+    labels[1]{name}:
+      bug
+    assignee: monalisa
+  - id: 2
+    title: Docs update
+    state: open
+    labels[1]{name}:
+      docs
+    assignee: hubot
+  - id: 3
+    title: Ship release
+    state: closed
+    labels[1]{name}:
+      release
+    assignee: octocat</pre>
+    </td>
+  </tr>
+</table>
 
 ## Configuration
 

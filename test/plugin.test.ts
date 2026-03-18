@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import ToonPlugin from "../src/index";
+import ToonPlugin from "../src/index.js";
 
 const LONG_JSON = JSON.stringify({
   hello: "world",

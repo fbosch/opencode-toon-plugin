@@ -47,10 +47,15 @@
     "build": "tsc -p tsconfig.json",
     "format": "biome check --write .",
     "lint": "biome check .",
+    "lint-staged": "lint-staged",
     "prepublishOnly": "bun audit && bun run test && bun run build",
     "release": "bun run typecheck && bunx bumpp && bun publish --access public",
     "test": "bun test --passWithNoTests",
+    "test:integration": "bun run build && bun test test/opencode.integration.test.ts",
     "typecheck": "tsc --noEmit"
+  },
+  "lint-staged": {
+    "*.{ts,js,mjs,cjs,json,jsonc,md}": "biome check --write"
   },
   "dependencies": {
     "@toon-format/toon": "^2.1.0"
@@ -60,6 +65,7 @@
     "@opencode-ai/plugin": "*",
     "@types/node": "^24.5.2",
     "bumpp": "^10.2.3",
+    "lint-staged": "^16.4.0",
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
