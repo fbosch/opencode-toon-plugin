@@ -1,6 +1,6 @@
 {
   "name": "opencode-toon-plugin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "OpenCode plugin that compacts large JSON tool output with Toon.",
   "author": "Frederik Bosch",
   "license": "MIT",
