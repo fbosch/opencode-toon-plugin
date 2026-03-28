@@ -39,6 +39,7 @@
   "opencode": {
     "type": "plugin",
     "hooks": [
+      "tool.execute.before",
       "tool.execute.after"
     ]
   },

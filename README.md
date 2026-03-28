@@ -39,6 +39,12 @@ bash output
          +-- TOON is shorter ------> replace output
          |
          +-- TOON is not shorter --> keep original
+
+jq input
+   |
+   +-- TOON-looking args ----------> decode back to JSON
+   |
+   +-- otherwise ------------------> keep original args
 ```
 
 ## Example
