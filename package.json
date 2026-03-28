@@ -70,5 +70,9 @@
   },
   "peerDependencies": {
     "@opencode-ai/plugin": "*"
+  },
+  "overrides": {
+    "picomatch": "^4.0.4",
+    "yaml": "^2.8.3"
   }
 }
