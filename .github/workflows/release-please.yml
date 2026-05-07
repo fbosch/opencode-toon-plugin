@@ -5,6 +5,11 @@ on:
     branches:
       - master
   workflow_dispatch:
+    inputs:
+      publish_tag:
+        description: Existing release tag to publish to npm
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -36,7 +41,7 @@ jobs:
   publish-npm:
     name: Publish to npm
     needs: release-please
-    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    if: ${{ needs.release-please.outputs.release_created == 'true' || inputs.publish_tag != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -47,7 +52,7 @@ jobs:
       - name: Checkout release tag
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.release-please.outputs.tag_name }}
+          ref: ${{ inputs.publish_tag || needs.release-please.outputs.tag_name }}
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
