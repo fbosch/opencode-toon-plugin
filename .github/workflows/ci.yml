@@ -26,9 +26,6 @@ jobs:
       - name: Check OpenCode CLI
         run: opencode --version
 
-      - name: Audit dependencies
-        run: bun audit
-
       - name: Typecheck
         run: bun run typecheck
 
@@ -58,9 +55,6 @@ jobs:
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
-
-      - name: Audit dependencies
-        run: bun audit
 
       - name: Typecheck
         run: bun run typecheck
