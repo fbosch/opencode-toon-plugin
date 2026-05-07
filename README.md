@@ -6,7 +6,9 @@
 
 Compact large JSON tool output in OpenCode with [TOON](https://github.com/toon-format/toon).
 
-Turns large JSON blobs into shorter, still-readable structured output and only replaces the original when the TOON result is smaller.
+The plugin acts as a middle layer: it stores shorter TOON in the context window instead of full JSON, while preserving JSON compatibility when forwarded output is used by later `bash` commands.
+
+It only replaces the original output when the TOON result is smaller.
 
 Strongly tabular JSON can see roughly 40-60% token savings, with smaller wins on mixed or nested data.
 
@@ -29,16 +31,62 @@ Add it to your OpenCode config:
 
 ## Behavior
 
+The plugin sits between tool output and the agent context. The agent sees compact TOON instead of large JSON, but commands can still receive JSON when that output is forwarded later.
+
+### Output compression
+
+Only `bash` output is handled by default. Output is changed only when all checks pass:
+
 ```text
-bash output
-   |
-   +-- <256 chars or non-JSON -----> keep original
-   |
-   +-- JSON >=256 chars
-         |
-         +-- TOON is shorter ------> replace output
-         |
-         +-- TOON is not shorter --> keep original
+┌─────────────┐
+│ bash output │
+└──────┬──────┘
+       │
+       v
+┌─────────────────┐     no
+│ 256+ chars and  │─────────> keep original output
+│ valid JSON?     │
+└────────┬────────┘
+         │ yes
+         v
+┌─────────────────┐     no
+│ TOON is shorter │─────────> keep original output
+│ than JSON?      │
+└────────┬────────┘
+         │ yes
+         v
+  show TOON in context
+  remember original JSON in memory
+```
+
+### Forwarded output
+
+Before a later `bash` command runs, the plugin looks for TOON payloads inside quoted strings and heredocs. It restores JSON in two cases:
+
+- Exact match: the TOON text matches output remembered in the current OpenCode process.
+- Valid TOON fallback: no memory match exists, but the payload can be decoded as TOON.
+
+Edited or invalid TOON is left unchanged.
+
+```text
+┌────────────────────────────────────┐
+│ bash command contains TOON payload │
+└───────────────┬────────────────────┘
+                │
+                v
+       ┌──────────────────┐    yes
+       │ remembered exact │────────> restore original JSON
+       │ TOON output?     │
+       └────────┬─────────┘
+                │ no
+                v
+       ┌──────────────────┐    yes
+       │ valid TOON       │────────> decode to JSON
+       │ payload?         │
+       └────────┬─────────┘
+                │ no
+                v
+          run command unchanged
 ```
 
 ## Example
