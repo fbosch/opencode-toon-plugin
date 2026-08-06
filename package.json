@@ -58,7 +58,7 @@
     "*.{ts,js,mjs,cjs,json,jsonc,md}": "biome check --write"
   },
   "dependencies": {
-    "@toon-format/toon": "^2.1.0"
+    "@toon-format/toon": "^4.1.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.9",
